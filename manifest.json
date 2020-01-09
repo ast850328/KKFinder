@@ -1,7 +1,7 @@
 {
-  "name": "Getting Started Example",
+  "name": "KKFinder",
   "version": "1.0",
-  "description": "Build an Extension!",
+  "description": "An extension can find music in KKBOX!",
   "permissions": ["contextMenus", "tabs", "storage", "https://*/", "http://*/"],
   "background": {
     "scripts": ["background.js"],
@@ -28,6 +28,5 @@
 	  "matches": ["<all_urls>"],
       "js":["contentScript.js"]
     }
-  ],
-  "web_accessible_resources": ["modal.html"]
+  ]
 }
