@@ -1,7 +1,3 @@
-// Copyright 2018 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
 'use strict';
 const tokenURL = 'https://account.kkbox.com/oauth2/token';
 const baseSearchURL = 'https://api.kkbox.com/v1.1/search';
@@ -23,7 +19,6 @@ chrome.runtime.onInstalled.addListener(function() {
   }
 
   chrome.contextMenus.onClicked.addListener((info, tab) => {
-    console.log(info);
     let type = info.menuItemId;
     let keywords = info.selectionText;
 
@@ -34,9 +29,7 @@ chrome.runtime.onInstalled.addListener(function() {
     xhr.responseType = 'json';
     xhr.onreadystatechange = () => {
       if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-        console.log(xhr.response);
         let kkAPIToken = xhr.response.access_token;
-
         let searchURL = baseSearchURL + `?q=${keywords}&type=${type}&territory=TW&limit=5`;
         xhr.open('GET', searchURL);
         xhr.setRequestHeader('Authorization', 'Bearer ' + kkAPIToken);
@@ -45,7 +38,8 @@ chrome.runtime.onInstalled.addListener(function() {
           if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
             let result = xhr.response;
             if (result.summary.total > 0) {
-              alert(JSON.stringify(xhr.response));
+              chrome.tabs.sendMessage(tab.id, {data: result, type: 'result'});
+              // alert(JSON.stringify(xhr.response));
             } else {
               alert('Nothing match!');
             }
