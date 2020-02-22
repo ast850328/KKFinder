@@ -2,7 +2,7 @@
   "name": "KKFinder",
   "version": "1.0",
   "description": "An extension can find music in KKBOX!",
-  "permissions": ["contextMenus", "tabs", "storage", "https://*/", "http://*/"],
+  "permissions": ["contextMenus", "activeTab", "storage", "https://*/", "http://*/"],
   "background": {
     "scripts": ["background.js"],
     "persistent": false

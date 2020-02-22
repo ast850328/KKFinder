@@ -6,9 +6,11 @@ const clientId = '3ac701a5aecd9339a0a59d1b48121909';
 const clientSecret = 'aa6f4336f75d183d6a95bb0d4cbe8ed4';
 const functions = ['track', 'album', 'artist', 'playlist'];
 
-
 chrome.runtime.onInstalled.addListener(function() {
+  createMenus();
+});
 
+function createMenus() {
   for (let f of functions) {
     chrome.contextMenus.create({
       id: f,
@@ -17,37 +19,38 @@ chrome.runtime.onInstalled.addListener(function() {
       contexts: ['selection'],
     });
   }
+}
 
-  chrome.contextMenus.onClicked.addListener((info, tab) => {
-    let type = info.menuItemId;
-    let keywords = info.selectionText;
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  let type = info.menuItemId;
+  let keywords = info.selectionText;
 
-    let queryString = `grant_type=${grantType}&client_id=${clientId}&client_secret=${clientSecret}`;
-    let xhr = new XMLHttpRequest();
-    xhr.open('POST', tokenURL);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.responseType = 'json';
-    xhr.onreadystatechange = () => {
-      if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-        let kkAPIToken = xhr.response.access_token;
-        let searchURL = baseSearchURL + `?q=${keywords}&type=${type}&territory=TW&limit=5`;
-        xhr.open('GET', searchURL);
-        xhr.setRequestHeader('Authorization', 'Bearer ' + kkAPIToken);
-        xhr.responseType = 'json';
-        xhr.onreadystatechange = () => {
-          if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-            let result = xhr.response;
-            if (result.summary.total > 0) {
-              chrome.tabs.sendMessage(tab.id, {data: result, type: 'result'});
-              // alert(JSON.stringify(xhr.response));
-            } else {
-              alert('Nothing match!');
-            }
+  let queryString = `grant_type=${grantType}&client_id=${clientId}&client_secret=${clientSecret}`;
+  let xhr = new XMLHttpRequest();
+
+  xhr.open('POST', tokenURL);
+  xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+  xhr.responseType = 'json';
+  xhr.onreadystatechange = () => {
+    if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+      let kkAPIToken = xhr.response.access_token;
+      let searchURL = baseSearchURL + `?q=${keywords}&type=${type}&territory=TW&limit=5`;
+      xhr.open('GET', searchURL);
+      xhr.setRequestHeader('Authorization', 'Bearer ' + kkAPIToken);
+      xhr.responseType = 'json';
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+          let result = xhr.response;
+          if (result.summary.total > 0) {
+            chrome.tabs.sendMessage(tab.id, { data: result, type: 'result' });
+            // alert(JSON.stringify(xhr.response));
+          } else {
+            alert('Nothing match!');
           }
         }
-        xhr.send();
-      }
-    };
-    xhr.send(queryString);
-  });
+      };
+      xhr.send();
+    }
+  };
+  xhr.send(queryString);
 });
