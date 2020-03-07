@@ -1,9 +1,10 @@
 'use strict';
-const tokenURL = 'https://account.kkbox.com/oauth2/token';
-const baseSearchURL = 'https://api.kkbox.com/v1.1/search';
+const authUrl = 'https://account.kkbox.com/oauth2/token';
+const baseUrl = 'https://api.kkbox.com/v1.1';
 const grantType = 'client_credentials';
 const clientId = '3ac701a5aecd9339a0a59d1b48121909';
 const clientSecret = 'aa6f4336f75d183d6a95bb0d4cbe8ed4';
+
 const functions = ['track', 'album', 'artist', 'playlist'];
 
 chrome.runtime.onInstalled.addListener(function() {
@@ -25,32 +26,64 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   let type = info.menuItemId;
   let keywords = info.selectionText;
 
-  let queryString = `grant_type=${grantType}&client_id=${clientId}&client_secret=${clientSecret}`;
-  let xhr = new XMLHttpRequest();
-
-  xhr.open('POST', tokenURL);
-  xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-  xhr.responseType = 'json';
-  xhr.onreadystatechange = () => {
-    if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-      let kkAPIToken = xhr.response.access_token;
-      let searchURL = baseSearchURL + `?q=${keywords}&type=${type}&territory=TW&limit=5`;
-      xhr.open('GET', searchURL);
-      xhr.setRequestHeader('Authorization', 'Bearer ' + kkAPIToken);
-      xhr.responseType = 'json';
-      xhr.onreadystatechange = () => {
-        if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-          let result = xhr.response;
-          if (result.summary.total > 0) {
-            chrome.tabs.sendMessage(tab.id, { data: result, type: 'result' });
-            // alert(JSON.stringify(xhr.response));
-          } else {
-            alert('Nothing match!');
-          }
-        }
-      };
-      xhr.send();
-    }
-  };
-  xhr.send(queryString);
+  getToken$()
+    .then(checkResponse)
+    .then(({ access_token }) => getSearchResult$(access_token, keywords, type, 'TW', 5))
+    .then(checkResponse)
+    .then(({ summary, paging, tracks }) => {
+      chrome.tabs.sendMessage(tab.id, { keywords, summary, paging, tracks });
+    })
+    .catch(error => console.log(error));
 });
+
+function checkResponse(response) {
+  if (!response.ok) {
+    throw new Error('Network response was not ok.');
+  }
+
+  return response.json();
+}
+
+function getSearchParams(params) {
+  return Object.keys(params)
+    .map(key => {
+      return encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
+    })
+    .join('&');
+}
+
+function getToken$() {
+  const authData = {
+    grant_type: grantType,
+    client_id: clientId,
+    client_secret: clientSecret,
+  };
+
+  let queryString = `grant_type=${grantType}&client_id=${clientId}&client_secret=${clientSecret}`;
+
+  return fetch(authUrl, {
+    method: 'POST',
+    credentials: 'omit',
+    body: getSearchParams(authData),
+    headers: new Headers({
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Accept: 'application/x-www-form-encoded',
+    }),
+  });
+}
+
+function getSearchResult$(token, q, type, territory, limit) {
+  const queryParams = {
+    q,
+    type,
+    territory,
+    limit,
+  };
+
+  return fetch(`${baseUrl}/search?${getSearchParams(queryParams)}`, {
+    method: 'GET',
+    headers: new Headers({
+      Authorization: `Bearer ${token}`,
+    }),
+  });
+}
