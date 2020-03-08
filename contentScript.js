@@ -1,3 +1,5 @@
+createIframe();
+
 chrome.runtime.onMessage.addListener(function(
   { keywords, summary, paging, tracks },
   sender,
@@ -135,4 +137,22 @@ function getFormatDuration(duration = 0) {
   ret += '' + mins + ':' + (secs < 10 ? '0' : '');
   ret += '' + secs;
   return ret;
+}
+
+// 透過下面的程式碼可以注入 iframe
+function createIframe() {
+  const root = document.createElement('div');
+  root.id = 'kkfinder-root';
+  document.body.appendChild(root);
+
+  const iframe = document.createElement('iframe');
+  iframe.id = 'kkfinder-iframe';
+  // iframe.allow = 'microphone;camera;';
+  iframe.sandbox = 'allow-scripts allow-same-origin allow-forms';
+  // iframe.setAttribute('allowFullScreen', '');
+  // iframe.scrolling = 'no';
+
+  iframe.src = chrome.runtime.getURL('template.html');
+
+  root.prepend(iframe);
 }

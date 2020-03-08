@@ -1,0 +1,99 @@
+.stop-scrolling {
+  height: 100vh;
+  overflow-y: hidden;
+  padding-right: 15px; /* Avoid width reflow */
+}
+
+#kkfinder-container {
+  /*overflow: auto;*/
+  /*min-height: 100px;*/
+  /*max-height: 100vh;*/
+  /*top: 5px;*/
+  /*right: 5px;*/
+  /*width: 450px;*/
+  /*position: fixed;*/
+  /*z-index: 2147483646;*/
+  /*background: #ffffff;*/
+  /*border: #3d8bcd 1px solid;*/
+  /*border-radius: 8px;*/
+}
+
+#kkfinder-header {
+  display: grid;
+  grid-template-columns: 30px auto 30px;
+  background: #3d8bcd;
+  padding: 10px;
+}
+
+#kkfinder-title {
+  padding: 0 5px;
+  background: #3d8bcd;
+  font-size: 16px;
+  line-height: 150%;
+  color: #ffffff;
+}
+
+#kkfinder-sunnyworm {
+  width: 100%;
+}
+
+#kkfinder-close {
+  color: #ffffff;
+  font-size: 30px;
+  line-height: 100%;
+  cursor: pointer;
+  /*opacity: 0.3;*/
+}
+
+#kkfinder-close:hover {
+  /*opacity: 1;*/
+}
+
+#kkfinder-close:after {
+  display: block;
+  content: '\00d7'; /* This will render the 'X' */
+}
+
+#kkfinder-content {
+  max-height: calc(100vh - 100px);
+  overflow: auto;
+  padding: 5px;
+  border: #3d8bcd 1px solid;
+  border-left: none;
+  border-right: none;
+}
+
+.kkfinder-track-wrapper {
+  display: grid;
+  grid-template-columns: 30px 90px auto 35px;
+}
+
+#kkfinder-header > *,
+.kkfinder-track-wrapper > *,
+#kkfinder-footer > * {
+  align-self: center;
+}
+
+#kkfinder-close,
+.kkfinder-track-wrapper > *:not(.kkfinder-track-detail),
+#kkfinder-pagination > * {
+  justify-self: center;
+}
+
+.kkfinder-album-image {
+  padding: 5px;
+  width: 80px;
+}
+
+#kkfinder-footer {
+  border-radius: 8px;
+}
+
+#kkfinder-pagination {
+  display: grid;
+  grid-template-columns: auto 30px 30px 30px auto;
+}
+
+#kkfinder-paginate-to-left {
+  grid-column-start: 2;
+}
