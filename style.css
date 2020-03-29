@@ -97,3 +97,8 @@
 #kkfinder-paginate-to-left {
   grid-column-start: 2;
 }
+
+.kkfinder-paginate-link {
+  cursor: pointer;
+  color: #3d8bcd;
+}
