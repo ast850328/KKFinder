@@ -1,19 +1,24 @@
+// global var
+_keywords = '';
+_type = '';
+
 chrome.runtime.onMessage.addListener(function(
-  { keywords, summary, paging, tracks },
+  { keywords, type, summary, paging, tracks, requestType },
   sender,
   sendResponse
 ) {
-  open(tracks.summary, tracks.paging, tracks.data);
+  _keywords = keywords;
+  _type = type;
+  if (requestType == 'open') {
+    clearHistory();
+    open();
+  }
+  // else if (requestType == 'update')
+  renderTracks(tracks.data, paging.offset);
+  setPaginationState(paging);
 });
 
-function open(summary, paging, tracks) {
-  const totalResult = summary.total || 0;
-  const limit = paging.limit || 0;
-  const offset = paging.offset || 0;
-  const currentPage = offset / limit + 1;
-  const previousUrl = paging.previous;
-  const nextUrl = paging.next;
-
+function open() {
   /* container */
   const containerEl = document.createElement('div');
   containerEl.id = 'kkfinder-container';
@@ -41,6 +46,48 @@ function open(summary, paging, tracks) {
   /* content */
   const contentEl = document.createElement('div');
   contentEl.id = 'kkfinder-content';
+
+  /* footer */
+  const footerEl = document.createElement('div');
+  footerEl.id = 'kkfinder-footer';
+  const paginationEl = document.createElement('div');
+  paginationEl.id = 'kkfinder-pagination';
+  footerEl.appendChild(paginationEl);
+
+  containerEl.appendChild(headerEl);
+  containerEl.appendChild(contentEl);
+  containerEl.appendChild(footerEl);
+  document.body.appendChild(containerEl);
+}
+
+function close() {
+  this.remove();
+}
+
+function getFormatDuration(duration = 0) {
+  // Hours, minutes and seconds
+  const hrs = ~~(duration / 3600000);
+  const mins = ~~((duration / 60000) % 60000);
+  const secs = ~~((~~duration % 60000) / 1000);
+
+  // Output like "1:01" or "4:03:59" or "123:03:59"
+  let ret = '';
+
+  if (hrs > 0) {
+    ret += '' + hrs + ':' + (mins < 10 ? '0' : '');
+  }
+
+  ret += '' + mins + ':' + (secs < 10 ? '0' : '');
+  ret += '' + secs;
+  return ret;
+}
+
+function renderTracks(tracks, offset) {
+  const contentEl = document.getElementById('kkfinder-content');
+  contentEl.innerHTML = '';
+  if (tracks.length == 0) {
+    contentEl.innerHTML = 'Result not found!';
+  }
   tracks.map((track = {}, index) => {
     const trackLineNumber = offset + index + 1;
     const trackName = track.name || 'N/A';
@@ -88,51 +135,45 @@ function open(summary, paging, tracks) {
 
     contentEl.appendChild(trackWrapperEl);
   });
+}
 
-  /* footer */
-  const footerEl = document.createElement('div');
-  footerEl.id = 'kkfinder-footer';
-  const paginationEl = document.createElement('div');
-  paginationEl.id = 'kkfinder-pagination';
+function setPaginationState({ previous, next, offset, limit }) {
+  const currentPage = offset / limit + 1;
+  const paginationEl = document.getElementById('kkfinder-pagination');
+  paginationEl.innerHTML = '';
   const paginateToLeftEl = document.createElement('span');
   paginateToLeftEl.id = 'kkfinder-paginate-to-left';
   paginateToLeftEl.innerText = '«';
+  if (previous) {
+    paginateToLeftEl.classList.add('kkfinder-paginate-link');
+    paginateToLeftEl.addEventListener('click', getNewResult(offset-5));
+  }else {
+    paginateToLeftEl.classList.remove('kkfinder-paginate-link');
+  }
   const paginationCurrentPageEl = document.createElement('span');
-  paginationCurrentPageEl.innerText = '' + currentPage;
+  paginationCurrentPageEl.id = 'kkfinder-paginate-current-page';
+  paginationCurrentPageEl.innerHTML = '' + currentPage;
   const paginateToRightEl = document.createElement('span');
+  paginateToRightEl.id = 'kkfinder-paginate-to-right';
   paginateToRightEl.innerText = '»';
+  if (next) {
+    paginateToRightEl.classList.add('kkfinder-paginate-link');
+    paginateToRightEl.addEventListener('click', getNewResult(offset+5));
+  } else {
+    paginateToRightEl.classList.remove('kkfinder-paginate-link');
+  }
   paginationEl.appendChild(paginateToLeftEl);
   paginationEl.appendChild(paginationCurrentPageEl);
   paginationEl.appendChild(paginateToRightEl);
-  footerEl.appendChild(paginationEl);
-
-  containerEl.appendChild(headerEl);
-  containerEl.appendChild(contentEl);
-  containerEl.appendChild(footerEl);
-  document.body.appendChild(containerEl);
-
-  // document.body.classList.add('stop-scrolling');
 }
 
-function close() {
-  // document.body.classList.remove('stop-scrolling');
-  this.remove();
+function clearHistory(){
+  const containerEl = document.getElementById('kkfinder-container');
+  if (containerEl) { containerEl.remove() }
 }
 
-function getFormatDuration(duration = 0) {
-  // Hours, minutes and seconds
-  const hrs = ~~(duration / 3600000);
-  const mins = ~~((duration / 60000) % 60000);
-  const secs = ~~((~~duration % 60000) / 1000);
-
-  // Output like "1:01" or "4:03:59" or "123:03:59"
-  let ret = '';
-
-  if (hrs > 0) {
-    ret += '' + hrs + ':' + (mins < 10 ? '0' : '');
-  }
-
-  ret += '' + mins + ':' + (secs < 10 ? '0' : '');
-  ret += '' + secs;
-  return ret;
+function getNewResult(offset) {
+  return function (event) {
+    chrome.runtime.sendMessage({ requestType: 'get-result', offset, keywords: _keywords, type: _type });
+  };
 }
