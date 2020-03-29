@@ -36,6 +36,21 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     })
     .catch(error => console.log(error));
 });
+
+chrome.runtime.onMessage.addListener(({ requestType, offset, keywords, type }, sender) => {
+  if (requestType == 'get-result') {
+    const requestType = 'update';
+    getToken$()
+      .then(checkResponse)
+      .then(({ access_token }) => getSearchResult$(access_token, keywords, type, 'TW', 5, offset))
+      .then(checkResponse)
+      .then(({ summary, paging, tracks }) => {
+        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+          chrome.tabs.sendMessage(tabs[0].id, { keywords, type, summary, paging, tracks, requestType });
+        });
+      })
+      .catch(error => console.log(error));
+  }
 });
 
 function checkResponse(response) {
