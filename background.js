@@ -72,12 +72,13 @@ function getToken$() {
   });
 }
 
-function getSearchResult$(token, q, type, territory, limit) {
+function getSearchResult$(token, q, type, territory, limit, offset=0) {
   const queryParams = {
     q,
     type,
     territory,
     limit,
+    offset,
   };
 
   return fetch(`${baseUrl}/search?${getSearchParams(queryParams)}`, {
