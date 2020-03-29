@@ -25,15 +25,17 @@ function createMenus() {
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   let type = info.menuItemId;
   let keywords = info.selectionText;
+  const requestType = 'open';
 
   getToken$()
     .then(checkResponse)
     .then(({ access_token }) => getSearchResult$(access_token, keywords, type, 'TW', 5))
     .then(checkResponse)
     .then(({ summary, paging, tracks }) => {
-      chrome.tabs.sendMessage(tab.id, { keywords, summary, paging, tracks });
+      chrome.tabs.sendMessage(tab.id, { keywords, type, summary, paging, tracks, requestType });
     })
     .catch(error => console.log(error));
+});
 });
 
 function checkResponse(response) {
